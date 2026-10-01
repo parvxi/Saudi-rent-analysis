@@ -1,3 +1,4 @@
+Implement CSV loading with explicit UTF-8 handling and multiline-quoted-field support. Validate the source header and row widths, but omit `details` from the loaded table without reading or validating its values. Validate retained columns for structured nulls, numeric parseability/finiteness, indicator domains, known city/front categories, and duplicates. Write a concise machine-readable and human-readable validation report without mutating the source or reporting anything about `details`.
 # Saudi Rental Listings: Project Plan
 
 ## Project overview
@@ -85,12 +86,12 @@ The README should include these Arabic-to-English mappings so readers can interp
 
 ### Initial data-quality findings and proposed handling
 
-Inspected `data/SA_Aqar.csv` with a CSV-aware parser: 3,718 records and 24 columns. All rows have the expected width; every `city` and `district` value has surrounding whitespace. There are 2,197 extra exact duplicate rows across 60 repeated row groups (1,521 unique full-row signatures). All 14 amenity/room indicator fields inspected contain only `0` or `1`. City values correspond to the four stated cities, encoded in Arabic. The `front` field contains Arabic directions and street-count values, including `3 شوارع` and `4 شوارع` for corner houses. The `details` column is excluded from loading and is not inspected.
+Inspected `data/SA_Aqar.csv` with a CSV-aware parser: 3,718 records and 24 columns. All rows have the expected width; every `city` and `district` value has surrounding whitespace. After excluding `details`, there are 2,207 extra exact duplicate rows and 1,511 unique signatures across the retained columns. All 14 amenity/room indicator fields inspected contain only `0` or `1`. City values correspond to the four stated cities, encoded in Arabic. The `front` field contains Arabic directions and street-count values, including `3 شوارع` and `4 شوارع` for corner houses. The `details` column is excluded from loading and is not inspected.
 
 | Finding | Proposed handling |
 |---|---|
 | Every city/district string is whitespace-padded; city values are Arabic. | Preserve raw input; trim normalized values, map the four known city names explicitly to English labels for charts, and retain an unknown-value validation error rather than guessing transliterations. Do not use district in charts or the model. |
-| 2,197 exact duplicate rows (60 repeated groups), with no listing ID or timestamp. | Report duplicate counts in validation and remove exact duplicate rows across retained columns before analysis/modeling, recording before/after counts. `details` is never loaded or used for duplicate detection; do not collapse merely similar homes. |
+| 2,207 extra duplicate rows after excluding `details`, with no listing ID or timestamp. | Report duplicate counts in validation and remove exact duplicate rows across retained columns before analysis/modeling, recording before/after counts. `details` is never loaded or used for duplicate detection; do not collapse merely similar homes. |
 | `details` may contain people/contact details. | Drop the `details` column completely while loading. Never inspect, retain, process, log, report, or model its values. |
 | `size` ranges from 1 to 95,000 (median 330; 99th percentile 1,000); unit is m². | Validate finite numeric values, flag sizes below 50 or above 2,000 m² in the cleaning report, and exclude those rows from analysis/modeling. |
 | `price` ranges from 1,000 to 1,700,000 (median 70,000; 99th percentile 300,000); it is yearly rent in SAR. | Validate finite numeric values, flag prices below 10,000 or above 500,000 SAR in the cleaning report, and exclude those rows from analysis/modeling. Do not annualize or convert the target. |
@@ -188,7 +189,7 @@ Stop if raw data changes, rows disappear without a reported rule, or the cleanin
 ### Goal
 Describe the observed rent distribution and how recorded features vary across the four cities.
 ### Proposed changes
-Create a compact set of reproducible tables and charts: listing/rent distributions by city, rent versus size, and a small set of bedroom/property-feature comparisons. Use English labels and claim-first titles based on actual computed findings (for example, “Riyadh listings have the highest median asking rent in this sample” only if the result supports it). Write a concise text/Markdown summary and PNGs.
+Create a compact set of reproducible tables and charts: listing/rent distributions by city, rent versus size, and bedroom comparisons. Bedroom bars show sample counts, group seven or more bedrooms as `7+`, and use a claim-first title reflecting the observed rent peak. Format rent axes with thousands separators. Use English labels and claim-first titles based on actual computed findings (for example, “Riyadh listings have the highest median asking rent in this sample” only if the result supports it). Write a concise text/Markdown summary and PNGs.
 ### Important files
 `src/aqar_rent/analysis.py`, `src/aqar_rent/charts.py`, `Makefile`, `artifacts/reports/analysis_summary.md`, `artifacts/figures/`.
 ### Architecture / boundaries
@@ -217,13 +218,13 @@ Stop if a chart omits a city/sample-size context, renders an unsupported compari
 ### Goal
 Estimate a reference asking rent for a property profile and show how reliable that estimate is on held-out listings.
 ### Proposed changes
-Use yearly rent in SAR as the target and implement a modest scikit-learn pipeline using city, translated `front` category, size, bedrooms, bathrooms, property age, and selected binary amenities. Exclude district and `details`. Train only after exact deduplication and the confirmed price/size exclusions. Compare with a city-level median baseline. Report MAE and median absolute error overall and by city, plus a prediction for a clearly specified example. Call output a reference estimate, not a definitive fair/market rent.
+Use yearly rent in SAR as the target and implement a modest scikit-learn pipeline using city, translated `front` category, size, bedrooms, bathrooms, property age, and selected binary amenities. Exclude district and `details`. Train only after exact deduplication and the confirmed price/size exclusions. Compare with a city-level median baseline. Report MAE and median absolute error overall and by city, plus a prediction for a clearly specified example. Compute permutation importance on held-out data using MAE increase, include its ranking in the report and a figure, and explain that correlated features can share or obscure importance. Do not use built-in forest importances or coefficients. Call output a reference estimate, not a definitive fair/market rent.
 ### Important files
-`src/aqar_rent/modeling.py`, `src/aqar_rent/cli.py`, `Makefile`, `artifacts/model/metrics.json`, `artifacts/model/reference_model.joblib`, `artifacts/reports/model_summary.md`.
+`src/aqar_rent/modeling.py`, `src/aqar_rent/charts.py`, `src/aqar_rent/cli.py`, `Makefile`, `artifacts/model/metrics.json`, `artifacts/model/reference_model.joblib`, `artifacts/reports/model_summary.md`, `artifacts/figures/permutation_importance.png`.
 ### Architecture / boundaries
 Training consumes only the cleaned table, uses a fixed random seed and a documented holdout, and compares against the baseline. Deduplicate before splitting; disclose that absent listing IDs prevent robust listing-level grouping. Save model and metrics under generated artifacts only.
 ### Risks
-Small effective sample size (1,521 unique full-row signatures before deduplication), city imbalance, and lack of transaction data constrain accuracy and generalization. A random holdout does not prove performance on unseen neighborhoods or future market conditions; district is intentionally excluded because of its sparse categories.
+Small effective sample size (1,511 unique retained-column signatures after exact deduplication), city imbalance, and lack of transaction data constrain accuracy and generalization. A random holdout does not prove performance on unseen neighborhoods or future market conditions; district is intentionally excluded because of its sparse categories.
 ### Automated tests (Unit / Regression / Integration)
 - **Unit:** feature/target selection, preprocessing, fixed-seed split, baseline, and metric calculation.
 - **Regression:** metrics and example prediction remain within documented tolerances on a small synthetic fixture; no text feature enters the model.

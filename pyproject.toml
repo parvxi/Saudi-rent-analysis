@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aqar-rent"
+version = "0.1.0"
+description = "Reproducible analysis of Saudi rental listings"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "joblib>=1.3",
+    "matplotlib>=3.8",
+    "pandas>=2.2",
+    "scikit-learn>=1.4",
+]
+
+[project.optional-dependencies]
+dev = ["black>=24.0", "flake8>=7.0", "pytest>=8.0"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+markers = [
+    "unit: focused tests of individual functions",
+    "regression: tests for stable project contracts and outputs",
+    "integration: tests that exercise package or Make interfaces",
+]
+
+[tool.black]
+line-length = 88
+target-version = ["py312"]
