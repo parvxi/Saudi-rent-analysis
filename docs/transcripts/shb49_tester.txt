@@ -1,0 +1,310 @@
+STUDENT_NAME: Shahad Baalkhashir
+NETID: shb49
+OPTION: 3
+ROLE: tester
+AGENT_TOOL: GitHub Copilot Chat in VS Code (Agent mode, Auto model selection, resolved to GPT-6 Luna)
+REPOSITORY_B_URL: https://github.com/parvxi/Saudi-rent-analysis
+===== TRANSCRIPT START =====
+
+[STUDENT]
+You are the Tester for this project. Another AI built it, and you did
+not see that conversation. Review it like a pull request you did not
+write.
+
+1. Read docs/plan.md first; it is the contract.
+2. Compare the implementation with the plan, stage by stage. List
+   anything incomplete, incorrect, or different from the plan.
+3. Run the test suite, black, and flake8. Judge whether the tests are
+   meaningful: do they check both typical cases and edge cases? Are any
+   tests weak or missing?
+4. Check edge-case behavior yourself, for example: a missing input
+   file, an empty CSV, unknown city or front values, prices exactly at
+   10,000 and 500,000, and sizes exactly at 50 and 2,000.
+5. Follow the README setup instructions as a new user would, and check
+   that the Manual Smoke Tests in docs/plan.md still match reality.
+6. Check the Docker setup: build, run, and that the image does not
+   contain data/SA_Aqar.csv.
+
+Do NOT fix anything yet. First give me a prioritized list of findings
+(critical / important / minor) with evidence, and recommend
+corrections. I will decide which ones to fix.
+
+Never commit or copy data/SA_Aqar.csv, and never read or print the
+details column.
+
+[AGENT]
+I’ll start with  as the contract, then trace its stages to the implementation and tests. I’ll avoid displaying or inspecting the `details` column and won’t modify or commit anything.
+[Read memory]
+
+[Read [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/docs/plan.md#1-1), lines 1 to 240]
+The plan defines six stages, with explicit boundaries around excluding `details`, reproducible cleaning, evidence-based charts, held-out modeling, and Docker data isolation. I’m checking the remaining plan and the project’s command/config surface next, then I’ll test the implementation against those specific contracts.
+[Read [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/docs/plan.md#241-241), lines 241 to 275]
+
+[Read [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/README.md)]
+
+[Read [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/pyproject.toml)]
+
+[Read [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/Makefile)]
+
+[Read [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/Dockerfile)]
+The README and Makefile align with the documented entry points, and the Docker config appears to mount raw data read-only while keeping it out of the build context. I’m now verifying the actual loader, cleaning rules, analysis/model contracts, and test coverage before running commands that touch the local dataset.
+[Running ` git status --short`]
+
+[Read [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/src/aqar_rent/io.py)]
+
+[Read [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/src/aqar_rent/schema.py)]
+
+[Read [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/src/aqar_rent/validation.py)]
+
+[Read [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/src/aqar_rent/cleaning.py)]
+The loader checks exact headers and logical record widths, and its returned table omits `details`; the major unresolved contract point is whether its CSV parsing temporarily materializes that field at all. I also found one pre-existing untracked  directory, which I’ll leave untouched. I’m checking whether reports/tests reveal other gaps before running the suite and style gates.
+[Running ` git check-ignore -v data/SA\_Aqar.csv`]
+
+[Searched for files matching `**/{.dockerignore,.flake8,.gitignore,tests/**}`, 16 matches]
+
+[Read [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/src/aqar_rent/analysis.py)]
+
+[Read [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/src/aqar_rent/charts.py)]
+
+[Read [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/src/aqar_rent/modeling.py)]
+
+[Read [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/src/aqar_rent/cli.py)]
+
+[Read [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/tests/unit/test_validation.py)]
+
+[Read [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/tests/unit/test_cleaning.py)]
+
+[Read [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/tests/unit/test_analysis.py)]
+
+[Read [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/tests/unit/test_modeling.py)]
+
+[Read [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/tests/integration/test_docker_pipeline.py)]
+
+[Read [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/src/aqar_rent/paths.py)]
+The core behavior is largely present: boundary comparisons exclude only values strictly outside the bounds, unknown categories fail validation, and model features exclude both district and text. Coverage is thinner than the plan in places, so I’m reading the remaining contract/integration tests and Docker ignore rules before I run the prescribed setup and check edge cases with synthetic inputs only.
+[Read [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/tests/regression/test_project_contract.py)]
+
+[Read [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/tests/regression/test_cleaning_contract.py)]
+
+[Read [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/tests/regression/test_analysis_contract.py)]
+
+[Read [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/tests/regression/test_modeling_contract.py)]
+
+[Read [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/tests/integration/test_validate_data_command.py)]
+
+[Read [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/tests/integration/test_clean_data_command.py)]
+
+[Read [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/tests/integration/test_analysis_model_pipeline.py)]
+
+[Read [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/.dockerignore)]
+
+[Read [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/.flake8)]
+The tests are synthetic and protect the main privacy/output boundaries, but I haven’t found explicit tests for empty input, unknown front in the end-to-end command, or exact accepted thresholds. I’ll follow the README’s `make install`/`make test` sequence, then run Black and Flake8 and a small temporary edge-case check without opening the Kaggle CSV.
+[Running ` make install`]
+
+[Running ` .venv/bin/python -m pytest -q`]
+
+[Running ` .venv/bin/black --check src tests`]
+
+[Running ` .venv/bin/flake8 src tests`]
+
+[Running ` .venv/bin/python -c 'from pathlib import Path; from tempfile import Temporar...`]
+The README setup succeeded; pytest reports **33 passed**, Black found no formatting changes, Flake8 is clean, and synthetic checks confirm inclusive bounds at 10,000/500,000 and 50/2,000, with unknown categories rejected. The Docker integration test also ran in that suite. I’m doing the documented `make docker-build`/`make docker-run` smoke path now and will inspect only aggregate reports and artifact/image status.
+[Running ` make docker-build && make docker-run`]
+The documented Docker build/run succeeded against the host CSV through a read-only bind mount; it completed with 1,466 eligible listings and held-out MAE 31,107 SAR/year. I’m checking the generated aggregate reports against the plan’s manual smoke expectations and confirming the final worktree/image state, without opening source data or displaying any free text.
+[Running ` docker run --rm --entrypoint python aqar-rent -c 'from pathlib import Path; ...`]
+
+[Running ` rg -n 'csv\\.reader|len\\\(row\\\)|retained\_indexes|city\_raw|drop\_duplicates|PRIC...`]
+
+[Read [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/artifacts/reports/data_validation.txt)]
+
+[Read [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/artifacts/reports/cleaning_summary.txt)]
+
+[Read [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/artifacts/reports/analysis_summary.md)]
+
+[Read [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/artifacts/reports/model_summary.md)]
+The real-data smoke outputs match the plan’s checks: 3,718 records, 24 source/23 loaded columns, 2,207 duplicate rows, 1,511 post-dedup, and reports/charts/model present; the data remains Git-ignored, and the image lacks the CSV at its runtime data path. One possible report-level gap remains: the model report’s baseline comparison may omit median-error results that are present in the metrics JSON; I’m locating the exact lines and finishing the manual target checks.
+[Running ` grep -nE 'csv\\.reader|len\\\(row\\\)|retained\_indexes' src/aqar\_rent/io.py; grep...`]
+
+[Running ` find src tests -maxdepth 3 -type f -print && make -n analyze && file artifac...`]
+
+[Running ` git status --short && git diff --stat && git check-ignore -v data/SA\_Aqar.csv`]
+The smoke checks are complete and tracked files are unchanged; the only existing worktree item is . I’ve narrowed the review to two plan/report fidelity points plus test coverage around exact boundaries, and I’m checking the Python review’s grounding requirements before I write up findings.
+[Read skill [python-fact-grounded-coding](file:///Users/shahad/.vscode/extensions/ms-python.vscode-pylance-2026.4.1/skills/python-fact-grounded-coding/SKILL.md?vscodeLinkType%3Dskill)]
+**Findings**
+
+**Critical**
+- None.
+
+**Important**
+- **`details` is parsed and transiently materialized before exclusion.** src/aqar_rent/io.py#L17 uses , which returns every field in ; the loader filters `details` only when building retained records (src/aqar_rent/io.py#L34). It is absent from returned tables and reports, but this does not meet the plan’s strict “never read” boundary. Change the loader so the field is discarded without materializing its value, while preserving CSV structure checks.
+
+**Minor**
+- **The field named `city_raw` is not the original value.** It is copied, then stripped along with every column (src/aqar_rent/cleaning.py#L50). Preserve the original city string before trimming, or clarify that this field is intended to hold only the unmapped Arabic label.
+- **The human-readable model report omits baseline median absolute error.** Metrics calculate it overall and per city, but the report table and summary show baseline MAE only (src/aqar_rent/modeling.py#L298). Include the baseline median error for a like-for-like comparison.
+- **Exact-boundary behavior lacks automated regression coverage.** Cleaning tests cover values just outside the bounds (tests/unit/test_cleaning.py#L46), but not values exactly on them. I checked synthetically: 10,000/500,000 SAR and 50/2,000 m² are eligible; just-outside values are excluded. Add those equality cases to tests. Empty-CSV handling also works in a synthetic check but has no dedicated test.
+
+**Stage Check**
+- Stage 0: README setup succeeded under Python 3.12; `make -n analyze` resolves to the package CLI.
+- Stage 1: Validation report matches the plan’s 3,718 records, 24 source columns, 23 loaded columns, and 2,207 duplicate rows.
+- Stage 2: Cleaning reports 1,511 deduplicated rows and 45 exclusions; out-of-range rows remain flagged.
+- Stage 3: Analysis report and five nonempty PNGs were generated with English, data-supported titles and city counts.
+- Stage 4: Model uses a fixed holdout, city-median baseline, per-city errors, and held-out permutation importance; the report gap above remains.
+- Stage 5: `make docker-build` and `make docker-run` succeeded. The pipeline reported 1,466 eligible listings and held-out MAE of 31,107 SAR/year. The CSV is Git-ignored and absent from the image’s default data path.
+
+**Checks**
+`make install` succeeded; pytest: **33 passed**; Black: **23 files unchanged**; Flake8: clean. Unknown city/front values were rejected in synthetic checks; missing and empty inputs produced errors as expected. The smoke tests did not change tracked files; the existing untracked  directory remains untouched.
+
+[STUDENT]
+Thanks, this is a thorough review. My decisions:
+
+1. details "transiently materialized": I'm rejecting this one. To find
+   where each CSV record ends, the parser has to scan the details field
+   (it contains newlines), so "never read" isn't realistic. The real
+   requirement is that details is never stored, used, logged, or
+   output, and the code already meets that. Please update the wording
+   in docs/plan.md to say "never retained, used, or output" instead of
+   "never read".
+
+2. city_raw: I'm keeping it stripped. I asked for that on purpose; the
+   surrounding whitespace has no meaning. Please clarify in the plan
+   that city_raw is the trimmed Arabic label before translation.
+
+3. Accepted: add the baseline median absolute error to the model report.
+
+4. Accepted: add tests for the exact boundaries (10,000 / 500,000 SAR
+   and 50 / 2,000 m² are kept, just outside is excluded) and for an
+   empty CSV.
+
+Two problems I found in my own manual smoke test that your review
+missed:
+
+5. Every make target reinstalls the package (pip install -e runs 5
+   times during make pipeline). Please make install run only when
+   needed, e.g. when pyproject.toml changes.
+
+6. Two typos in model_summary.md: "columnat a time" and
+   "valuation.A random holdout" are missing spaces.
+
+Please fix 3–6 and the wording in 1–2, then rerun make test, black,
+flake8, and make pipeline, and summarize the final status.
+
+[AGENT]
+I’ll make the agreed plan wording updates, then fix the install target so repeated Make invocations reuse an editable install until  changes. I’ll also update the generated model report and add focused tests for the equality bounds, empty CSV, and report wording; first I’m checking the exact current text and target dependencies so the edits stay narrow.
+[Searched for regex `never read|without reading|details.*read|city_raw|columnat|valuation\.A random` (`**/docs/plan.md`), 3 results]
+
+[Searched for regex `columnat|valuation\.A random|column at a time|valuation\. A random|baseline|median absolute error` (`**/src/aqar_rent/modeling.py`), 11 results]
+
+[No matches found. Your search pattern might be excluded completely by either the search.exclude settings or .*ignore files.
+If you believe that it should have results, you can check into the .*ignore files and the exclude setting (here are some excluded patterns for reference:[**/node_modules,**/bower_components,**/*.code-search]).
+Then if you want to include those files you can call the tool again by setting "includeIgnoredFiles" to true.]
+
+[Read [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/Makefile)]
+
+[Read [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/src/aqar_rent/modeling.py#260-260), lines 260 to 350]
+
+[Read [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/tests/unit/test_validation.py)]
+
+[Read [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/tests/unit/test_cleaning.py)]
+
+[Read [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/tests/integration/test_analysis_model_pipeline.py)]
+The Makefile confirms each recursive target currently triggers the phony `install` recipe. The report generator already contains the intended spaces in its current text, so I’ll make those sentence boundaries explicit and lock the exact phrases in the integration test, alongside the new baseline-median assertions. I’m checking all plan privacy wording before patching it.
+[Running ` git status --short`]
+
+[Searched for regex `details|city_raw|Trim whitespace` (`**/docs/plan.md`), 18 results]
+
+[Read [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/docs/plan.md#1-1), lines 1 to 12]
+
+[Read [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/docs/plan.md#84-84), lines 84 to 150]
+
+[Read [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/tests/integration/test_analysis_model_pipeline.py#72-72), lines 72 to 100]
+I’m editing six files: update the plan’s privacy and `city_raw` wording; add a -keyed install stamp; report baseline median AE overall and per city; and extend existing tests for threshold edges, empty input, and report spacing/content. I’ll immediately run those focused tests before the full requested gates.
+[Generating patch (128 lines) in [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/docs/plan.md), [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/Makefile), [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/src/aqar_rent/modeling.py), [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/tests/unit/test_validation.py), [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/tests/unit/test_cleaning.py), [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/tests/integration/test_analysis_model_pipeline.py)]
+
+```
+
+[Edited docs/plan.md]
+
+```
+
+```
+
+[Edited Makefile]
+
+```
+
+```
+
+[Edited src/aqar_rent/modeling.py]
+
+```
+
+```
+
+[Edited tests/unit/test_validation.py]
+
+```
+
+```
+
+[Edited tests/unit/test_cleaning.py]
+
+```
+
+```
+
+[Edited tests/integration/test_analysis_model_pipeline.py]
+
+```
+
+[Running ` .venv/bin/python -m pytest -q tests/unit/test\_cleaning.py tests/unit/test\_va...`]
+The focused run caught one stale assertion: the report column was intentionally renamed from “City-median MAE” to “Baseline MAE.” I’m updating that expectation, then I’ll rerun the same focused tests before proceeding.
+[Generating patch (7 lines) in [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/tests/integration/test_analysis_model_pipeline.py)]
+
+```
+
+[Edited tests/integration/test_analysis_model_pipeline.py]
+
+```
+
+[Running ` .venv/bin/python -m pytest -q tests/unit/test\_cleaning.py tests/unit/test\_va...`]
+The focused tests now pass: **20 passed**. I found two remaining plan sentences that still imply `details` is never inspected; I’ll align those with your clarified rule as well, then run the full suite and requested formatting/lint and pipeline checks.
+[Running ` test -f .venv/.install-stamp && make -n install`]
+
+[Searched for regex `details[^\n]*(read|inspect)|(?:read|inspect)[^\n]*details` (`**/docs/plan.md`), 4 results]
+
+[Read [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/docs/plan.md#135-135), lines 135 to 145]
+
+[Read [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/docs/plan.md#80-80), lines 80 to 90]
+
+[Generating patch (10 lines) in [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/docs/plan.md)]
+
+```
+
+[Edited docs/plan.md]
+
+```
+The plan now consistently describes the agreed privacy boundary, and `make -n install` confirms a current environment is a no-op. I’m running the full pytest suite, Black, and Flake8 now; after those pass, I’ll run the real-data `make pipeline` and verify it invokes installation only once or not at all.
+[Running ` make test`]
+
+[Running ` .venv/bin/black --check .`]
+
+[Running ` .venv/bin/flake8`]
+All quality gates are green: **42 tests passed**, Black reports 23 files unchanged, and Flake8 is clean. I’m running the requested full `make pipeline` against the real local CSV now; its output is aggregate-only, and I’ll confirm the install stamp prevented redundant pip installs afterward.
+[Running ` make pipeline`]
+`make pipeline` completed all four stages without invoking pip: validation passed on 3,718 records, cleaning produced 1,511 rows with 45 exclusions, analysis/modeling used 1,466 eligible listings, and held-out MAE remained 31,107 SAR/year. I’m doing a final check of generated report text, the  rebuild trigger, editor diagnostics, and the worktree.
+[Running ` grep -nE 'Baseline|column at a time|columnat|valuation\\. A random|valuation\\...`]
+
+[Running ` git status --short && git diff --stat && git diff --check`]
+
+[Checked [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/src/aqar_rent/modeling.py), [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/tests/unit/test_cleaning.py), [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/tests/unit/test_validation.py), [](file:///Users/shahad/Desktop/Data%20Engineering%20-%20IDS%20706/Assignments/IDS706-Week4-RepoB/tests/integration/test_analysis_model_pipeline.py), no problems found]
+Implemented the accepted changes:
+
+- Updated docs/plan.md to define `details` as never retained, used, or output, and clarify that `city_raw` is the trimmed Arabic label before translation.
+- Added a  dependency to Makefile. Pipeline stages now reuse the install; a dry run showed no pip command normally and an install when  is newer.
+- Added baseline median absolute error to the overall and per-city model report in src/aqar_rent/modeling.py, with integration assertions for the metric and report spacing.
+- Added tests for the exact price/size bounds and just-outside values in tests/unit/test_cleaning.py, and empty CSV input in tests/unit/test_validation.py.
+
+**Verification:** `make test` passed (**42 tests**), Black passed (**23 files unchanged**), Flake8 passed, and `make pipeline` completed across all stages. The real-data pipeline reported 3,718 validated records, 1,511 deduplicated rows, 45 exclusions, 1,466 eligible listings, and 31,107 SAR/year held-out MAE. Diagnostics and `git diff --check` were clean. No data or details values were read or printed during these checks; the existing untracked  directory was left untouched.
+
+===== TRANSCRIPT END =====

@@ -67,6 +67,28 @@ def test_cleaning_deduplicates_retained_rows_and_flags_outliers() -> None:
     assert cleaned["analysis_eligible"].sum() == 1
 
 
+@pytest.mark.parametrize(
+    ("updates", "expected_eligible"),
+    [
+        ({"price": "10000"}, True),
+        ({"price": "500000"}, True),
+        ({"price": "9999"}, False),
+        ({"price": "500001"}, False),
+        ({"size": "50"}, True),
+        ({"size": "2000"}, True),
+        ({"size": "49"}, False),
+        ({"size": "2001"}, False),
+    ],
+)
+@pytest.mark.unit
+def test_cleaning_keeps_exact_bounds_and_excludes_values_just_outside(
+    updates: dict[str, str], expected_eligible: bool
+) -> None:
+    cleaned, _ = clean_listings(raw_frame([valid_values(**updates)]))
+
+    assert bool(cleaned.iloc[0]["analysis_eligible"]) is expected_eligible
+
+
 @pytest.mark.unit
 def test_cleaning_rejects_invalid_retained_values() -> None:
     invalid = raw_frame([valid_values(size="not-numeric")])

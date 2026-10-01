@@ -295,16 +295,17 @@ def write_model_outputs(
         "",
         (
             "| City | Deduplicated | Eligible | Held out | Model MAE (SAR) | "
-            "Model median AE (SAR) | City-median MAE (SAR) |"
+            "Model median AE (SAR) | Baseline MAE (SAR) | Baseline median AE (SAR) |"
         ),
-        "|---|---:|---:|---:|---:|---:|---:|",
+        "|---|---:|---:|---:|---:|---:|---:|---:|",
     ]
     lines.extend(
         f"| {row['city']} | {row['deduplicated_listings']} | "
         f"{row['eligible_listings']} | {row['test_listings']} | "
         f"{row['model']['mae_sar']:,.0f} | "
         f"{row['model']['median_absolute_error_sar']:,.0f} | "
-        f"{row['city_median_baseline']['mae_sar']:,.0f} |"
+        f"{row['city_median_baseline']['mae_sar']:,.0f} | "
+        f"{row['city_median_baseline']['median_absolute_error_sar']:,.0f} |"
         for row in metrics["per_city"]
     )
     lines.extend(
@@ -317,11 +318,15 @@ def write_model_outputs(
             f"{metrics['model']['median_absolute_error_sar']:,.0f} SAR/year.",
             "- City-median baseline MAE: "
             f"{metrics['city_median_baseline']['mae_sar']:,.0f} SAR/year.",
+            "- City-median baseline median absolute error: "
+            f"{metrics['city_median_baseline']['median_absolute_error_sar']:,.0f} "
+            "SAR/year.",
             "",
             "## Held-out permutation importance",
             "",
             "Features are ranked by the mean increase in held-out MAE (SAR/year) "
-            "after permuting one input column at a time; larger values indicate "
+            "after permuting one input column "
+            "at a time; larger values indicate "
             "greater model reliance in this holdout.",
             "",
             "| Feature | Mean MAE increase (SAR/year) | Standard deviation |",
@@ -345,7 +350,8 @@ def write_model_outputs(
             f"{metrics['reference_estimate']['estimated_yearly_rent_sar']:,.0f} SAR.",
             "",
             "This is a reference estimate from scraped asking listings, not a "
-            "certified or fair-market valuation. A random holdout does not "
+            "certified or fair-market valuation."
+            " A random holdout does not "
             "establish performance on future listings or unseen neighborhoods.",
         ]
     )

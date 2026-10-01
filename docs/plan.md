@@ -1,4 +1,4 @@
-Implement CSV loading with explicit UTF-8 handling and multiline-quoted-field support. Validate the source header and row widths, but omit `details` from the loaded table without reading or validating its values. Validate retained columns for structured nulls, numeric parseability/finiteness, indicator domains, known city/front categories, and duplicates. Write a concise machine-readable and human-readable validation report without mutating the source or reporting anything about `details`.
+Implement CSV loading with explicit UTF-8 handling and multiline-quoted-field support. Validate the source header and row widths, but omit `details` from the loaded table; its values are never retained, used, or output. Validate retained columns for structured nulls, numeric parseability/finiteness, indicator domains, known city/front categories, and duplicates. Write a concise machine-readable and human-readable validation report without mutating the source or reporting anything about `details`.
 # Saudi Rental Listings: Project Plan
 
 ## Project overview
@@ -75,7 +75,7 @@ The README should include these Arabic-to-English mappings so readers can interp
 
 ### Risks and design concerns
 
-- `details` may contain contact information. Exclude the entire column as part of loading, never inspect, retain, process, or print its values, and do not include it in derived files.
+- `details` may contain contact information. Exclude the entire column as part of loading; its values are never retained, used, or output, and it is not included in derived files.
 - The CSV is a local Kaggle input: never commit or redistribute it. Document Kaggle download steps in the README and keep `data/` ignored by Git and outside the Docker build context.
 - Treat `price` as yearly rent in SAR and `size` as m². Keep out-of-range values visible in cleaning flags/reports, but exclude them from analysis/model inputs using the confirmed bounds below.
 - Asking prices are not transacted rents; a model cannot establish an objective or legally reliable "fair" price. Report validation error and sample limitations with every estimate.
@@ -86,13 +86,13 @@ The README should include these Arabic-to-English mappings so readers can interp
 
 ### Initial data-quality findings and proposed handling
 
-Inspected `data/SA_Aqar.csv` with a CSV-aware parser: 3,718 records and 24 columns. All rows have the expected width; every `city` and `district` value has surrounding whitespace. After excluding `details`, there are 2,207 extra exact duplicate rows and 1,511 unique signatures across the retained columns. All 14 amenity/room indicator fields inspected contain only `0` or `1`. City values correspond to the four stated cities, encoded in Arabic. The `front` field contains Arabic directions and street-count values, including `3 شوارع` and `4 شوارع` for corner houses. The `details` column is excluded from loading and is not inspected.
+Inspected `data/SA_Aqar.csv` with a CSV-aware parser: 3,718 records and 24 columns. All rows have the expected width; every `city` and `district` value has surrounding whitespace. After excluding `details`, there are 2,207 extra exact duplicate rows and 1,511 unique signatures across the retained columns. All 14 amenity/room indicator fields inspected contain only `0` or `1`. City values correspond to the four stated cities, encoded in Arabic. The `front` field contains Arabic directions and street-count values, including `3 شوارع` and `4 شوارع` for corner houses. The `details` column is excluded from loaded data; its values are never retained, used, or output.
 
 | Finding | Proposed handling |
 |---|---|
 | Every city/district string is whitespace-padded; city values are Arabic. | Preserve raw input; trim normalized values, map the four known city names explicitly to English labels for charts, and retain an unknown-value validation error rather than guessing transliterations. Do not use district in charts or the model. |
 | 2,207 extra duplicate rows after excluding `details`, with no listing ID or timestamp. | Report duplicate counts in validation and remove exact duplicate rows across retained columns before analysis/modeling, recording before/after counts. `details` is never loaded or used for duplicate detection; do not collapse merely similar homes. |
-| `details` may contain people/contact details. | Drop the `details` column completely while loading. Never inspect, retain, process, log, report, or model its values. |
+| `details` may contain people/contact details. | Drop the `details` column completely while loading; its values are never retained, used, or output. |
 | `size` ranges from 1 to 95,000 (median 330; 99th percentile 1,000); unit is m². | Validate finite numeric values, flag sizes below 50 or above 2,000 m² in the cleaning report, and exclude those rows from analysis/modeling. |
 | `price` ranges from 1,000 to 1,700,000 (median 70,000; 99th percentile 300,000); it is yearly rent in SAR. | Validate finite numeric values, flag prices below 10,000 or above 500,000 SAR in the cleaning report, and exclude those rows from analysis/modeling. Do not annualize or convert the target. |
 | `front` contains Arabic directions and street-count values such as `3 شوارع` and `4 شوارع`. | Translate direction values into English and map multi-street values to the `corner` category; test the mapping with synthetic fixtures. |
@@ -132,13 +132,13 @@ Stop if the selected interpreter is not Python 3.12, package installation requir
 ### Goal
 Read the CSV safely and make its schema and data-quality state visible before cleaning.
 ### Proposed changes
-Implement CSV loading with explicit UTF-8 handling and multiline-quoted-field support. Validate the source header and row widths, but omit `details` from the loaded table without reading or validating its values. Validate retained columns for structured nulls, numeric parseability/finiteness, indicator domains, city values, and duplicates. Write a concise machine-readable and human-readable validation report without mutating the source or reporting anything about `details`.
+Implement CSV loading with explicit UTF-8 handling and multiline-quoted-field support. Validate the source header and row widths, but omit `details` from the loaded table; its values are never retained, used, or output. Validate retained columns for structured nulls, numeric parseability/finiteness, indicator domains, city values, and duplicates. Write a concise machine-readable and human-readable validation report without mutating the source or reporting anything about `details`.
 ### Important files
 `src/aqar_rent/schema.py`, `src/aqar_rent/io.py` (add if useful), `src/aqar_rent/validation.py` (add if useful), `Makefile`, `artifacts/reports/data_validation.json`, `artifacts/reports/data_validation.txt`.
 ### Architecture / boundaries
-The loader returns retained raw values with `details` omitted; validation reports findings and never cleans or drops rows. User-facing operations are exposed through a `make validate-data` target. The loaded table has the 23 retained columns; `details` contents are never read or included in reports.
+The loader returns retained raw values with `details` omitted; validation reports findings and never cleans or drops rows. User-facing operations are exposed through a `make validate-data` target. The loaded table has the 23 retained columns; `details` values are never retained, used, or output.
 ### Risks
-CSV fields can contain embedded newlines, so physical line counts are not record counts. Drop `details` from the loaded table before any downstream operation; validation must not inspect or report its contents.
+CSV fields can contain embedded newlines, so physical line counts are not record counts. Drop `details` from the loaded table before any downstream operation; its values must never be retained, used, or output.
 ### Automated tests (Unit / Regression / Integration)
 - **Unit:** source-header/schema checks, details-column omission, malformed-row handling, and numeric/binary checks using tiny synthetic CSV fixtures including quoted newlines.
 - **Regression:** assert the expected 24-column source schema, 23-column loaded schema, and stable aggregate validation facts using synthetic fixtures.
@@ -160,7 +160,7 @@ Stop on a schema/encoding/row-width error or any report that exposes free-text c
 ### Goal
 Produce a reproducible analysis table while preserving raw data and making every transformation auditable.
 ### Proposed changes
-Drop `details` during loading. Trim whitespace; map the four known Arabic city values to English category labels while retaining a raw city field; translate `front` directions to English and map street-count values such as `3 شوارع` and `4 شوارع` to `corner`; coerce validated numeric and indicator fields; remove exact duplicate rows across retained columns; and emit a cleaning summary. Flag prices below 10,000 or above 500,000 SAR and sizes below 50 or above 2,000 m², then exclude those records from analysis/modeling while retaining their flags and counts in the report. Preserve raw price/size values for audit; price is yearly rent in SAR and size is m².
+Drop `details` during loading. Trim whitespace; map the four known Arabic city values to English category labels while retaining `city_raw` as the trimmed Arabic label before translation; translate `front` directions to English and map street-count values such as `3 شوارع` and `4 شوارع` to `corner`; coerce validated numeric and indicator fields; remove exact duplicate rows across retained columns; and emit a cleaning summary. Flag prices below 10,000 or above 500,000 SAR and sizes below 50 or above 2,000 m², then exclude those records from analysis/modeling while retaining their flags and counts in the report. Preserve raw price/size values for audit; price is yearly rent in SAR and size is m².
 ### Important files
 `src/aqar_rent/cleaning.py`, `src/aqar_rent/validation.py`, `Makefile`, `artifacts/cleaned/listings.csv`, `artifacts/reports/cleaning_summary.txt`.
 ### Architecture / boundaries

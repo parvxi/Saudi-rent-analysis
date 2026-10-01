@@ -1,10 +1,14 @@
 PYTHON := .venv/bin/python
 PIP := .venv/bin/pip
+INSTALL_STAMP := .venv/.install-stamp
 
 .PHONY: install test validate-data clean-data analyze train pipeline docker-build docker-run clean
 
-install: $(PYTHON)
+install: $(INSTALL_STAMP)
+
+$(INSTALL_STAMP): pyproject.toml $(PYTHON)
 	$(PIP) install -e ".[dev]"
+	touch $@
 
 $(PYTHON):
 	python3.12 -m venv .venv

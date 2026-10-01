@@ -82,7 +82,13 @@ def test_make_pipeline_writes_city_analysis_and_model_reports(tmp_path: Path) ->
     assert "Eligible listings" in analysis
     assert "Riyadh" in analysis and "Jeddah" in analysis
     assert "Deduplicated" in model_summary and "Held out" in model_summary
-    assert "Model MAE" in model_summary and "City-median MAE" in model_summary
+    assert "Model MAE" in model_summary and "Baseline MAE" in model_summary
+    assert "Baseline median AE (SAR)" in model_summary
+    assert "City-median baseline median absolute error:" in model_summary
+    assert "after permuting one input column at a time" in model_summary
+    assert "valuation. A random holdout" in model_summary
+    assert "columnat" not in model_summary
+    assert "valuation.A random" not in model_summary
     assert "Held-out permutation importance" in model_summary
     assert "Correlated features" in model_summary
     assert "Size (m²)" in model_summary

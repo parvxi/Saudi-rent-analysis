@@ -66,6 +66,15 @@ def test_loader_rejects_wrong_header_and_record_width(tmp_path: Path) -> None:
 
 
 @pytest.mark.unit
+def test_loader_rejects_empty_csv(tmp_path: Path) -> None:
+    source_path = tmp_path / "empty.csv"
+    source_path.write_text("", encoding="utf-8")
+
+    with pytest.raises(DataLoadError, match="CSV is empty"):
+        load_listings(source_path)
+
+
+@pytest.mark.unit
 def test_loader_reports_missing_input_without_reading_dataset(tmp_path: Path) -> None:
     with pytest.raises(DataLoadError, match="Could not read input CSV"):
         load_listings(tmp_path / "missing.csv")
